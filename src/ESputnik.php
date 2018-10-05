@@ -553,12 +553,12 @@ class ESputnik
     public function sendSMS($number, $text, $from = 'reklama')
     {
         $params = [
-            "number" => $number,
+            "phoneNumbers" => [$number],
             "text" => $text,
             "from" => $from,
         ];
 
-        $response = $this->request('POST', 'v1/message/sms', $params);
+        $response = $this->request('POST', 'v1/message/sms', [], $params);
 
         return $response;
     }
