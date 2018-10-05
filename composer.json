@@ -1,0 +1,35 @@
+{
+    "name": "maksa988/laravel-esputnik",
+    "description": "Laravel ESputnik",
+    "require": {
+        "php": ">=7.1.0",
+        "guzzlehttp/guzzle": "^6.3"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Dmytro Kulyk",
+            "email": "lnkvisitor.ts@gmail.com"
+        },
+        {
+            "name": "Maksa988",
+            "email": "maksa988ua@gmail.com",
+            "homepage": "maksa988.tech"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "ESputnik\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "ESputnik\\LaravelServiceProvider"
+            ],
+            "aliases": {
+                "ESputnik": "ESputnik\\Facades\\ESputnik"
+            }
+        }
+    }
+}
