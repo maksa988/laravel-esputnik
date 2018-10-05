@@ -550,9 +550,17 @@ class ESputnik
             }, $response);
     }
 
-    public function sendSMS()
+    public function sendSMS($number, $text, $from = 'reklama')
     {
-        // /v1/message/sms	POST
+        $params = [
+            "number" => $number,
+            "text" => $text,
+            "from" => $from,
+        ];
+
+        $response = $this->request('POST', 'v1/message/sms', $params);
+
+        return $response;
     }
 
     public function getInstantSmsStatus()
