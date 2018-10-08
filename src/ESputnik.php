@@ -12,7 +12,7 @@ namespace ESputnik;
 
 use ESputnik\Types;
 use ESputnik\Types\ImportSessionStatus;
-use ESputnik\Types\InstantMessageStatusDto;
+use ESputnik\Types\InterfaceDto;
 use ESputnik\Types\SendMessageResultDto;
 use ESputnik\Types\SMSMessage;
 use ESputnik\Types\SubscribeContact;
@@ -433,10 +433,10 @@ class ESputnik
      * @param string $externalRequestId
      * @param bool $skipPersonalisation
      *
-     * @return array|InstantMessageStatusDto
+     * @return array|SendMessageResultDto
      * @throws ESException
      */
-    public function sendEmail(string $from, string $subject, string $htmlText, string $plaintText, $emails, array $tags, int $campaignId = null, string $externalRequestId = null, bool $skipPersonalisation = false)
+    public function sendEmail(string $from, string $subject, string $htmlText, string $plaintText, $emails, array $tags = [], int $campaignId = null, string $externalRequestId = null, bool $skipPersonalisation = false)
     {
         $emails = (is_array($emails)) ? $emails : [$emails];
 
@@ -455,12 +455,12 @@ class ESputnik
         $response = $this->request('POST', 'v1/message/email', [], $params);
 
         if(!isset($response['results']))
-            return new InstantMessageStatusDto($response);
+            return new SendMessageResultDto($response);
 
         $response = $response['results'];
 
         return \array_map(function ($response) {
-            return new InstantMessageStatusDto($response);
+            return new SendMessageResultDto($response);
         }, $response);
     }
 
@@ -602,11 +602,14 @@ class ESputnik
      * @param array|string $numbers
      * @param string $text
      * @param string $from
+     * @param array $tags
+     * @param int|null $groupId
+     * @param string|null $externalRequestId
      *
-     * @return array
+     * @return array|SendMessageResultDto
      * @throws ESException
      */
-    public function sendSMS($numbers, $text, $from = 'reklama') : array
+    public function sendSMS($numbers, $text, $from = 'reklama', array $tags = [], int $groupId = null, string $externalRequestId = null)
     {
         $numbers = (is_array($numbers)) ? $numbers : [$numbers];
 
@@ -614,12 +617,21 @@ class ESputnik
             "phoneNumbers" => $numbers,
             "text" => $text,
             "from" => $from,
+            "tags" => $tags,
+            "groupId" => $groupId,
+            "externalRequestId" => $externalRequestId,
         ];
 
-        $response = $this->request('POST', 'v1/message/sms', [], $params)['results'];
+        $response = $this->request('POST', 'v1/message/sms', [], $params);
+
+
+        if(!isset($response['results']))
+            return new SendMessageResultDto($response);
+
+        $response = $response['results'];
 
         return \array_map(function ($response) {
-            return new InstantMessageStatusDto($response);
+            return new SendMessageResultDto($response);
         }, $response);
     }
 
@@ -668,14 +680,57 @@ class ESputnik
         return new ImportSessionStatus($response);
     }
 
+    /**
+     * @return array
+     * @throws ESException
+     */
     public function getSmsInterfaces()
     {
-        // /v1/interfaces/sms	GET
+        $response = $this->request('GET', 'v1/interfaces/sms');
+
+        return \array_map(function ($response) {
+            return new InterfaceDto($response);
+        }, $response);
     }
 
-    public function sendPreparedMessage()
+    /**
+     * @param int $id
+     * @param array $params
+     * @param string|array $recipients
+     * @param int|null $groupId
+     * @param int|null $contactId
+     * @param string|null $fromName
+     * @param int|null $campaignId
+     * @param bool $allowUnconfirmed
+     * @param string|null $externalRequestId
+     *
+     * @return array|bool|SendMessageResultDto
+     * @throws ESException
+     */
+    public function sendPreparedMessage(int $id, array $params, $recipients, int $groupId = null, int $contactId = null, string $fromName = null, int $campaignId = null, bool $allowUnconfirmed = false, string $externalRequestId = null)
     {
-        // /v1/message/{id}/send	POST
+        $messageParams = [
+            "groupId" => $groupId,
+            "contactId" => $contactId,
+            "params" => $params,
+            "recipients" => (is_array($recipients)) ? $recipients : [$recipients],
+            "fromName" => $fromName,
+            "campaignId" => $campaignId,
+            "allowUnconfirmed" => $allowUnconfirmed,
+            "externalRequestId" => $externalRequestId,
+        ];
+
+        $response = $this->request('POST', "v1/message/{$id}/send", [], $messageParams)['results'];
+
+        if ($this->httpCode === 404) {
+            return false;
+        }
+
+        return isset($response['locator'])
+            ? [new SendMessageResultDto($response)]
+            : array_map(function ($response) {
+                return new SendMessageResultDto($response);
+            }, $response);
     }
 
     /**
