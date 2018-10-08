@@ -433,13 +433,11 @@ class ESputnik
      * @param string $externalRequestId
      * @param bool $skipPersonalisation
      *
-     * @return array
+     * @return array|InstantMessageStatusDto
      * @throws ESException
      */
-    public function sendEmail(string $from, string $subject, string $htmlText, string $plaintText, $emails, array $tags, int $campaignId, string $externalRequestId, bool $skipPersonalisation = false)
+    public function sendEmail(string $from, string $subject, string $htmlText, string $plaintText, $emails, array $tags, int $campaignId = null, string $externalRequestId = null, bool $skipPersonalisation = false)
     {
-        // /v1/message/email	POST
-
         $emails = (is_array($emails)) ? $emails : [$emails];
 
         $params = [
@@ -454,7 +452,12 @@ class ESputnik
             "skipPersonalisation" => $skipPersonalisation,
         ];
 
-        $response = $this->request('POST', 'v1/message/email', [], $params)['results'];
+        $response = $this->request('POST', 'v1/message/email', [], $params);
+
+        if(!isset($response['results']))
+            return new InstantMessageStatusDto($response);
+
+        $response = $response['results'];
 
         return \array_map(function ($response) {
             return new InstantMessageStatusDto($response);
