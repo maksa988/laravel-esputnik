@@ -755,39 +755,6 @@ class ESputnik
             }, $response);
     }
 
-    public function ordersBulkInsert(array $orders)
-    {
-        // orders POST
-    }
-
-    public function getSmsCallouts()
-    {
-        // callouts/sms GET
-    }
-
-    public function contactActivity()
-    {
-        // contactActivity GET
-    }
-
-    public function startCampaign()
-    {
-        // campaigns/{id}/star POST
-    }
-
-    public function searchContactsOld()
-    {
-        // contacts/old GET
-    }
-
-    /**
-     * @param int $id
-     */
-    public function stopImCallout($id)
-    {
-        // messages/{id}/stop POST
-    }
-
     /**
      * Get last response http code
      *

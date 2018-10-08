@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: maksa988
- * Date: 08.10.18
- * Time: 14:26
- */
 
 namespace ESputnik\Types;
 
