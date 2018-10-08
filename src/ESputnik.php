@@ -10,8 +10,13 @@ declare(strict_types=1);
 
 namespace ESputnik;
 
-use ESputnik\Types\SubscribeContact;
 use ESputnik\Types;
+use ESputnik\Types\ImportSessionStatus;
+use ESputnik\Types\InstantMessageStatusDto;
+use ESputnik\Types\SendMessageResultDto;
+use ESputnik\Types\SMSMessage;
+use ESputnik\Types\SubscribeContact;
+
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\RequestOptions;
@@ -417,14 +422,54 @@ class ESputnik
         ));
     }
 
-    public function sendEmail()
+    /**
+     * @param string $from
+     * @param string $subject
+     * @param string $htmlText
+     * @param string $plaintText
+     * @param $emails
+     * @param array $tags
+     * @param int $campaignId
+     * @param string $externalRequestId
+     * @param bool $skipPersonalisation
+     *
+     * @return array
+     * @throws ESException
+     */
+    public function sendEmail(string $from, string $subject, string $htmlText, string $plaintText, $emails, array $tags, int $campaignId, string $externalRequestId, bool $skipPersonalisation = false)
     {
         // /v1/message/email	POST
+
+        $emails = (is_array($emails)) ? $emails : [$emails];
+
+        $params = [
+            "from" => $from,
+            "subject" => $subject,
+            "htmlText" => $htmlText,
+            "plainText" => $plaintText,
+            "emails" => $emails,
+            "tags" => $tags,
+            "campaignId" => $campaignId,
+            "externalRequestId" => $externalRequestId,
+            "skipPersonalisation" => $skipPersonalisation,
+        ];
+
+        $response = $this->request('POST', 'v1/message/email', [], $params)['results'];
+
+        return \array_map(function ($response) {
+            return new InstantMessageStatusDto($response);
+        }, $response);
     }
 
-    public function getInstantEmailStatus()
+    /**
+     * @param array $ids
+     *
+     * @return array
+     * @throws ESException
+     */
+    public function getInstantEmailStatus(array $ids) : array
     {
-        // /v1/message/email/status	GET
+        return $this->getInstantMessagesStatus($ids);
     }
 
     /**
@@ -550,32 +595,74 @@ class ESputnik
             }, $response);
     }
 
-    public function sendSMS($number, $text, $from = 'reklama')
+    /**
+     * @param array|string $numbers
+     * @param string $text
+     * @param string $from
+     *
+     * @return array
+     * @throws ESException
+     */
+    public function sendSMS($numbers, $text, $from = 'reklama') : array
     {
+        $numbers = (is_array($numbers)) ? $numbers : [$numbers];
+
         $params = [
-            "phoneNumbers" => [$number],
+            "phoneNumbers" => $numbers,
             "text" => $text,
             "from" => $from,
         ];
 
-        $response = $this->request('POST', 'v1/message/sms', [], $params);
+        $response = $this->request('POST', 'v1/message/sms', [], $params)['results'];
 
-        return $response;
+        return \array_map(function ($response) {
+            return new InstantMessageStatusDto($response);
+        }, $response);
     }
 
-    public function getInstantSmsStatus()
+    /**
+     * @param array $ids
+     *
+     * @return array
+     * @throws ESException
+     */
+    public function getInstantSmsStatus(array $ids) : array
     {
-        // /v1/message/sms/status	GET
+        return $this->getInstantMessagesStatus($ids);
     }
 
-    public function searchSms()
+    /**
+     * @param string $search
+     * @param int $offset
+     * @param int $limit
+     *
+     * @return array
+     * @throws ESException
+     */
+    public function searchSms(string $search = '', int $offset = 0, int $limit = 500)
     {
-        // /v1/messages/sms	GET
+        $response = $this->request('GET', 'v1/messages/sms', [
+            'startindex' => $offset + 1,
+            'maxrows' => $limit,
+            'search' => $search
+        ]);
+
+        return \array_map(function ($message) {
+            return new SMSMessage($message);
+        }, $response);
     }
 
-    public function getImportSessionStatus()
+    /**
+     * @param string $sessionId
+     *
+     * @return ImportSessionStatus
+     * @throws ESException
+     */
+    public function getImportSessionStatus(string $sessionId)
     {
-        // /v1/importstatus/{sessionId}	GET
+        $response = $this->request('GET', 'v1/importstatus/' . $sessionId);
+
+        return new ImportSessionStatus($response);
     }
 
     public function getSmsInterfaces()
@@ -592,7 +679,7 @@ class ESputnik
      * @param int                 $id
      * @param Types\MessageParams $messageParams
      *
-     * @return Types\SendMessageResultDto[]|null
+     * @return Types\SendMessageResultDto[]|null|bool
      * @throws ESException
      */
     public function sendExtendedPreparedMessage(int $id, Types\MessageParams $messageParams): ?array
