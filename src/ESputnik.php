@@ -694,6 +694,19 @@ class ESputnik
     }
 
     /**
+     * @return array
+     * @throws ESException
+     */
+    public function getEmailInterfaces()
+    {
+        $response = $this->request('GET', 'v1/interfaces/email');
+
+        return \array_map(function ($response) {
+            return new InterfaceDto($response);
+        }, $response);
+    }
+
+    /**
      * @param int $id
      * @param array $params
      * @param string|array $recipients
