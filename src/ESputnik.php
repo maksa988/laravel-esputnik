@@ -459,6 +459,9 @@ class ESputnik
 
         $response = $response['results'];
 
+        if(isset($response['locator']))
+            return new SendMessageResultDto($response);
+
         return \array_map(function ($response) {
             return new SendMessageResultDto($response);
         }, $response);
@@ -629,6 +632,9 @@ class ESputnik
             return new SendMessageResultDto($response);
 
         $response = $response['results'];
+
+        if(isset($response['locator']))
+            return new SendMessageResultDto($response);
 
         return \array_map(function ($response) {
             return new SendMessageResultDto($response);
