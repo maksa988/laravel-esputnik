@@ -181,13 +181,13 @@ class ESputnik
     /**
      * Add/update contacts.
      *
-     * @param Types\ContactsBulkUpdate $contacts
+     * @param Types\ContactsBulkUpdate|\stdClass $contacts
      *
      * @return mixed
      * @throws ESException
-     * @todo untested
+     * @todo tested only stdClass
      */
-    public function contactsBulkUpdate(Types\ContactsBulkUpdate $contacts)
+    public function contactsBulkUpdate($contacts)
     {
         return $this->request('POST', 'v1/contacts', [], $contacts);
     }
